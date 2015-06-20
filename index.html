@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Arunpananat.GitHub.io by arunpanangat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Arunpananat.GitHub.io</h1>
+      <h2 class="project-tagline">Practical Machine Learning Project</h2>
+      <a href="https://github.com/arunpanangat/arunpananat.github.io" class="btn">View on GitHub</a>
+      <a href="https://github.com/arunpanangat/arunpananat.github.io/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/arunpanangat/arunpananat.github.io/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <hr>
+
+<p>title: "Practical Machine Learning - Project"
+author: "Arun Panangatt"
+date: "20 June 2015"</p>
+
+<h2>
+<a id="output-html_document" class="anchor" href="#output-html_document" aria-hidden="true"><span class="octicon octicon-link"></span></a>output: html_document</h2>
+
+<h2>
+<a id="project-summary" class="anchor" href="#project-summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Project Summary</h2>
+
+<p>The project is with reference to Human Activity Recognition(HAR). The project details how participants were asked to do barbell lifts 5 different ways-</p>
+
+<p>1.Sitting
+2.Sitting-down
+3.Standing 
+4.Standing-up
+5.Walking</p>
+
+<p>The resultant data was collected using devices like Jawbone Up, Nike FuelBand, and Fitbit worn by the paricipants. It is acknowledged that the classification of the quality of the exercises done by the participants may or may not have been correct.</p>
+
+<p>The obejctive is to build a machine learning algorithm to predict activity quality from activity sensor monitors and train a model based on the data received through various sensor values, which could later be used to predict the Classe variable,i.e, the manner in which the participants of HAR performed the exercises.</p>
+
+<h2>
+<a id="setting-up-the-environment" class="anchor" href="#setting-up-the-environment" aria-hidden="true"><span class="octicon octicon-link"></span></a>Setting up the Environment</h2>
+
+<div class="highlight highlight-r"><pre>library(<span class="pl-smi">caret</span>)</pre></div>
+
+<div class="highlight highlight-r"><pre>library(<span class="pl-smi">doParallel</span>)
+library(<span class="pl-smi">randomForest</span>)</pre></div>
+
+<div class="highlight highlight-r"><pre>set.seed(<span class="pl-c1">20150135</span>)
+<span class="pl-e">knitr</span><span class="pl-k">::</span><span class="pl-smi">opts_chunk</span><span class="pl-k">$</span>set(<span class="pl-v">echo</span><span class="pl-k">=</span><span class="pl-c1">TRUE</span>, <span class="pl-v">fig.width</span><span class="pl-k">=</span><span class="pl-c1">12</span>, <span class="pl-v">fig.height</span><span class="pl-k">=</span><span class="pl-c1">12</span>)</pre></div>
+
+<h2>
+<a id="downloading-data" class="anchor" href="#downloading-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Downloading data</h2>
+
+<p>Data was downloaded from the following locations to the working directory</p>
+
+<p><a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv</a></p>
+
+<p><a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv">https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv</a></p>
+
+<h2>
+<a id="cleaning-data" class="anchor" href="#cleaning-data" aria-hidden="true"><span class="octicon octicon-link"></span></a>Cleaning Data</h2>
+
+<p>The pml-training.csv data is used to devise training and testing sets during fitting of the model. The pml-test.csv data is used to submit 20 test cases based on the fitted model.</p>
+
+<p>All blank "", #DIV/0 and NA values are converted to NA.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">cleantrain</span>  <span class="pl-k">&lt;-</span> read.csv(<span class="pl-s"><span class="pl-pds">'</span>pml-training.csv<span class="pl-pds">'</span></span>, <span class="pl-v">na.strings</span><span class="pl-k">=</span>c(<span class="pl-s"><span class="pl-pds">"</span>NA<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>#DIV/0!<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>))
+<span class="pl-smi">cleantest</span>    <span class="pl-k">&lt;-</span> read.csv(<span class="pl-s"><span class="pl-pds">'</span>pml-testing.csv<span class="pl-pds">'</span></span> , <span class="pl-v">na.strings</span><span class="pl-k">=</span>c(<span class="pl-s"><span class="pl-pds">"</span>NA<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span>#DIV/0!<span class="pl-pds">"</span></span>, <span class="pl-s"><span class="pl-pds">"</span><span class="pl-pds">"</span></span>))</pre></div>
+
+<p>It is prudent to remove columns with too many "NA" values.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">tidydata</span>   <span class="pl-k">&lt;-</span> which((colSums(<span class="pl-k">!</span>is.na(<span class="pl-smi">cleantrain</span>)) <span class="pl-k">&gt;</span><span class="pl-k">=</span> <span class="pl-c1">0.6</span><span class="pl-k">*</span>nrow(<span class="pl-smi">cleantrain</span>)))
+<span class="pl-smi">cleantrain</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">cleantrain</span>[,<span class="pl-smi">tidydata</span>]
+<span class="pl-smi">cleantest</span>    <span class="pl-k">&lt;-</span> <span class="pl-smi">cleantest</span>[,<span class="pl-smi">tidydata</span>]</pre></div>
+
+<p>A few minor corrections to test set are needed to perform optimally with random forests.This deals with removal of problematic ids and correcting factor levels.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">cleantest</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">cleantest</span>[<span class="pl-k">-</span>ncol(<span class="pl-smi">cleantest</span>)]
+<span class="pl-smi">cleantest</span><span class="pl-k">$</span><span class="pl-smi">new_window</span> <span class="pl-k">&lt;-</span> <span class="pl-k">factor</span>(<span class="pl-smi">cleantest</span><span class="pl-k">$</span><span class="pl-smi">new_window</span>, <span class="pl-v">levels</span><span class="pl-k">=</span>c(<span class="pl-s"><span class="pl-pds">"</span>no<span class="pl-pds">"</span></span>,<span class="pl-s"><span class="pl-pds">"</span>yes<span class="pl-pds">"</span></span>))</pre></div>
+
+<p>The X and cvtd_timestamp columns are removed from the dataset as they are not relevant.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">cleantrain</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">cleantrain</span>[,<span class="pl-k">-</span>c(<span class="pl-c1">1</span>,<span class="pl-c1">5</span>)]
+<span class="pl-smi">cleantest</span>    <span class="pl-k">&lt;-</span> <span class="pl-smi">cleantest</span>[,<span class="pl-k">-</span>c(<span class="pl-c1">1</span>,<span class="pl-c1">5</span>)]</pre></div>
+
+<h2>
+<a id="division-of-data-into-training-and-test-data-sets" class="anchor" href="#division-of-data-into-training-and-test-data-sets" aria-hidden="true"><span class="octicon octicon-link"></span></a>Division of data into Training and Test data sets</h2>
+
+<p>Data is divided as follows - Training :60% and Test :40%</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">Traindata</span>  <span class="pl-k">&lt;-</span> createDataPartition(<span class="pl-smi">cleantrain</span><span class="pl-k">$</span><span class="pl-smi">classe</span>, <span class="pl-v">p</span> <span class="pl-k">=</span> <span class="pl-c1">0.6</span>, <span class="pl-v">list</span> <span class="pl-k">=</span> <span class="pl-c1">FALSE</span>)
+<span class="pl-smi">training</span>    <span class="pl-k">&lt;-</span> <span class="pl-smi">cleantrain</span>[<span class="pl-smi">Traindata</span>, ]
+<span class="pl-smi">testing</span>     <span class="pl-k">&lt;-</span> <span class="pl-smi">cleantrain</span>[<span class="pl-k">-</span><span class="pl-smi">Traindata</span>, ]</pre></div>
+
+<h2>
+<a id="fitting-random-forests" class="anchor" href="#fitting-random-forests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Fitting Random Forests</h2>
+
+<p>The output variable is named  class and other columns are in the dataframe named data</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">class</span> <span class="pl-k">&lt;-</span> <span class="pl-smi">training</span><span class="pl-k">$</span><span class="pl-smi">classe</span>
+<span class="pl-smi">data</span>  <span class="pl-k">&lt;-</span> <span class="pl-smi">training</span>[<span class="pl-k">-</span>ncol(<span class="pl-smi">training</span>)]</pre></div>
+
+<p>The  Parallel Random Forest algorithm will be used to fit the model.A 5 fold cross validation will be applied in the algorithm.</p>
+
+<div class="highlight highlight-r"><pre>registerDoParallel()
+<span class="pl-smi">rf</span> <span class="pl-k">&lt;-</span> train(<span class="pl-smi">data</span>, <span class="pl-smi">class</span>, <span class="pl-v">method</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>parRF<span class="pl-pds">"</span></span>, 
+    <span class="pl-v">tuneGrid</span><span class="pl-k">=</span><span class="pl-k">data.frame</span>(<span class="pl-v">mtry</span><span class="pl-k">=</span><span class="pl-c1">3</span>), 
+    <span class="pl-v">trControl</span><span class="pl-k">=</span>trainControl(<span class="pl-v">method</span><span class="pl-k">=</span><span class="pl-s"><span class="pl-pds">"</span>cv<span class="pl-pds">"</span></span>,<span class="pl-c1">5</span>))
+<span class="pl-smi">rf</span></pre></div>
+
+<p>A plot depicting the relative importance of the model variables is given in the Appendix ( Diagram 1)</p>
+
+<h2>
+<a id="confusion-matrix-for-the-tesing-set" class="anchor" href="#confusion-matrix-for-the-tesing-set" aria-hidden="true"><span class="octicon octicon-link"></span></a>Confusion Matrix for the Tesing set</h2>
+
+<p>The next step is to predict on the Tesing set and generate the confusion matrix for the Testing set.</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">testingPredictions</span> <span class="pl-k">&lt;-</span> predict(<span class="pl-smi">rf</span>, <span class="pl-v">newdata</span><span class="pl-k">=</span><span class="pl-smi">testing</span>)
+<span class="pl-smi">confMatrix</span> <span class="pl-k">&lt;-</span> confusionMatrix(<span class="pl-smi">testingPredictions</span>,<span class="pl-smi">testing</span><span class="pl-k">$</span><span class="pl-smi">classe</span>)
+<span class="pl-smi">confMatrix</span></pre></div>
+
+<h2>
+<a id="conclusion" class="anchor" href="#conclusion" aria-hidden="true"><span class="octicon octicon-link"></span></a>Conclusion</h2>
+
+<p>Verification of Accuracy </p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">confMatrix</span><span class="pl-k">$</span><span class="pl-smi">overall</span>[<span class="pl-c1">1</span>]</pre></div>
+
+<p>Checking out of sample error</p>
+
+<div class="highlight highlight-r"><pre><span class="pl-smi">osError</span><span class="pl-k">&lt;-</span> <span class="pl-c1">1</span> <span class="pl-k">-</span> as.numeric(confusionMatrix(<span class="pl-smi">testing</span><span class="pl-k">$</span><span class="pl-smi">classe</span>, <span class="pl-smi">testingPredictions</span>)<span class="pl-k">$</span><span class="pl-smi">overall</span>[<span class="pl-c1">1</span>])
+<span class="pl-smi">osError</span></pre></div>
+
+<p>It can be seen that the model predicts with an accuracy of 99.6% with a negligible out of sample error.</p>
+
+<h2>
+<a id="appendix" class="anchor" href="#appendix" aria-hidden="true"><span class="octicon octicon-link"></span></a>APPENDIX</h2>
+
+<p>DIAGRAM 1</p>
+
+<div class="highlight highlight-r"><pre>plot(varImp(<span class="pl-smi">rf</span>))</pre></div>
+
+<p><img alt=""></p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/arunpanangat/arunpananat.github.io">Arunpananat.GitHub.io</a> is maintained by <a href="https://github.com/arunpanangat">arunpanangat</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
+
